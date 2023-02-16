@@ -18,7 +18,6 @@
       clickMode="push"
     ></vue-particles>
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
-      <img v-if="logo" :src="logo" class="aligncenter"/><br>
       <h3 class="title">北省后台管理系统</h3>
       <el-form-item prop="username">
         <el-input
@@ -217,11 +216,4 @@ export default {
   height: calc(100% - 100px);
   position: absolute;
 }
-
-.aligncenter {
-  clear: both;
-  display: block;
-  margin: auto;
-}
-
 </style>
