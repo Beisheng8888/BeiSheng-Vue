@@ -1,6 +1,24 @@
 <template>
   <div class="login">
+    <vue-particles
+      color="#409EFF"
+      :particleOpacity="0.7"
+      :particlesNumber="80"
+      shapeType="circle"
+      :particleSize="4"
+      linesColor="#409EFF"
+      :linesWidth="1"
+      :lineLinked="true"
+      :lineOpacity="0.4"
+      :linesDistance="150"
+      :moveSpeed="3"
+      :hoverEffect="true"
+      hoverMode="grab"
+      :clickEffect="true"
+      clickMode="push"
+    ></vue-particles>
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
+      <img v-if="logo" :src="logo" class="aligncenter"/><br>
       <h3 class="title">北省后台管理系统</h3>
       <el-form-item prop="username">
         <el-input
@@ -55,6 +73,7 @@
 </template>
 
 <script>
+import logoImg from '@/assets/logo/logo.png'
 import Cookies from "js-cookie";
 import {encrypt, decrypt} from "@/utils/jsencrypt";
 import Verify from "@/components/Verifition/Verify";
@@ -64,6 +83,7 @@ export default {
   name: "Login",
   data() {
     return {
+      logo: logoImg,
       loginForm: {
         username: "",
         password: "",
@@ -191,4 +211,17 @@ export default {
   font-size: 12px;
   letter-spacing: 1px;
 }
+
+#particles-js {
+  width: 100%;
+  height: calc(100% - 100px);
+  position: absolute;
+}
+
+.aligncenter {
+  clear: both;
+  display: block;
+  margin: auto;
+}
+
 </style>
