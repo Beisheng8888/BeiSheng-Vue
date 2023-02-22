@@ -19,7 +19,7 @@
     ></vue-particles>
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
       <h3 class="title">北省后台管理系统</h3>
-      <el-form-item prop="username">
+      <el-form-item prop="username" v-if="!isSmsLogin">
         <el-input
           v-model="loginForm.username"
           type="text"
@@ -29,7 +29,7 @@
           <svg-icon slot="prefix" icon-class="user" class="el-input__icon input-icon"/>
         </el-input>
       </el-form-item>
-      <el-form-item prop="password">
+      <el-form-item prop="password" v-if="!isSmsLogin">
         <el-input
           v-model="loginForm.password"
           type="password"
@@ -47,7 +47,48 @@
         :imgSize="{ width: '330px', height: '155px' }"
         ref="verify"
       ></Verify>
-      <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">记住密码</el-checkbox>
+      <!--      <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">记住密码</el-checkbox>-->
+
+      <el-form-item prop="mobile" v-if="isSmsLogin">
+        <el-input v-model="loginForm.mobile" type="text" auto-complete="off" placeholder="手机号">
+          <svg-icon slot="prefix" icon-class="user" class="el-input__icon input-icon"/>
+        </el-input>
+      </el-form-item>
+      <el-form-item prop="smsCode" v-if="isSmsLogin">
+        <el-input
+          v-model="loginForm.smsCode"
+          auto-complete="off"
+          placeholder="验证码"
+          style="width: 63%"
+          @keyup.enter.native="handleLogin"
+        >
+          <svg-icon slot="prefix" icon-class="validCode" class="el-input__icon input-icon"/>
+        </el-input>
+        <div class="login-code">
+          <el-button round @click.native.prevent="getSmsCode">
+            {{ computeTime > 0 ? `(${computeTime}s)已发送` : '获取验证码' }}
+          </el-button>
+        </div>
+      </el-form-item>
+
+
+      <el-row>
+        <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">
+          {{ isSmsLogin ? '记住手机号' : '记住密码' }}
+        </el-checkbox>
+        <div class="sms-login">
+          <el-button
+            size="mini"
+            type="text"
+            @click.native.prevent="loginMethod"
+          >
+            <span v-if="isSmsLogin">账号密码登录</span>
+            <span v-else>短信登录</span>
+          </el-button>
+        </div>
+      </el-row>
+
+
       <el-form-item style="width:100%;">
         <el-button
           :loading="loading"
@@ -76,18 +117,24 @@ import logoImg from '@/assets/logo/logo.png'
 import Cookies from "js-cookie";
 import {encrypt, decrypt} from "@/utils/jsencrypt";
 import Verify from "@/components/Verifition/Verify";
+import {getSmsCode, smsLogin} from "@/api/login";
 
 export default {
   components: {Verify},
   name: "Login",
   data() {
     return {
+      cookiePassword: "",
+      computeTime: 0,
       logo: logoImg,
       loginForm: {
         username: "",
         password: "",
         rememberMe: false,
         code: "",
+        smsCode: "",
+        uuid: "",
+        mobile: "",
       },
       loginRules: {
         username: [
@@ -96,10 +143,16 @@ export default {
         password: [
           {required: true, trigger: "blur", message: "请输入您的密码"}
         ],
+        mobile: [
+          {required: true, trigger: "blur", message: "手机号不能为空"}
+        ],
+        // code: [{required: true, trigger: "change", message: "验证码不能为空"}],
+        // smsCode: [{ required: true, trigger: "blur", message: "验证码不能为空" }]
       },
       loading: false,
       // 注册开关
       register: false,
+      isSmsLogin: false,
       redirect: undefined
     };
   },
@@ -115,6 +168,9 @@ export default {
     this.getCookie();
   },
   methods: {
+    loginMethod() {
+      this.isSmsLogin = !this.isSmsLogin;
+    },
     getCookie() {
       const username = Cookies.get("username");
       const password = Cookies.get("password");
@@ -126,23 +182,43 @@ export default {
       };
     },
     capctchaCheckSuccess(params) {
-      this.loginForm.code = params.captchaVerification;
-      this.loading = true;
-      if (this.loginForm.rememberMe) {
-        Cookies.set("username", this.loginForm.username, {expires: 30});
-        Cookies.set("password", encrypt(this.loginForm.password), {expires: 30,});
-        Cookies.set("rememberMe", this.loginForm.rememberMe, {expires: 30});
-      } else {
-        Cookies.remove("username");
-        Cookies.remove("password");
-        Cookies.remove("rememberMe");
-      }
-      this.$store.dispatch("Login", this.loginForm).then(() => {
-        this.$router.push({path: this.redirect || "/"}).catch(() => {
+      if (this.isSmsLogin) {
+        this.loading = true;
+        if (this.loginForm.rememberMe) {
+          console.log("验证码登陆，记住我")
+          Cookies.set("mobile", this.loginForm.mobile, {expires: 30});
+          Cookies.set('rememberMe', this.loginForm.rememberMe, {expires: 30});
+        } else {
+          console.log("验证码登陆，不记住我")
+          Cookies.remove("mobile");
+          Cookies.remove('rememberMe');
+        }
+        console.log("去登陆")
+        this.$store.dispatch("SmsLogin", this.loginForm).then(() => {
+          this.$router.push({path: this.redirect || "/"}).catch(() => {
+          });
+        }).catch(() => {
+          this.loading = false;
         });
-      }).catch(() => {
-        this.loading = false;
-      });
+      } else {
+        this.loginForm.code = params.captchaVerification;
+        this.loading = true;
+        if (this.loginForm.rememberMe) {
+          Cookies.set("username", this.loginForm.username, {expires: 30});
+          Cookies.set("password", encrypt(this.loginForm.password), {expires: 30,});
+          Cookies.set("rememberMe", this.loginForm.rememberMe, {expires: 30});
+        } else {
+          Cookies.remove("username");
+          Cookies.remove("password");
+          Cookies.remove("rememberMe");
+        }
+        this.$store.dispatch("Login", this.loginForm).then(() => {
+          this.$router.push({path: this.redirect || "/"}).catch(() => {
+          });
+        }).catch(() => {
+          this.loading = false;
+        });
+      }
     },
     handleLogin() {
       this.$refs.loginForm.validate((valid) => {
@@ -150,6 +226,30 @@ export default {
           this.$refs.verify.show();
         }
       });
+    },
+    getSmsCode() {
+      if (!this.computeTime) {
+        this.$refs.loginForm.validate(valid => {
+          if (valid) {
+            getSmsCode(this.loginForm.mobile).then(res => {
+              if (res.code === 200) {
+                this.$message({
+                  message: '验证码已发送',
+                  type: 'success'
+                });
+                this.loginForm.uuid = res.uuid;
+                this.computeTime = 60;
+                this.timer = setInterval(() => {
+                  this.computeTime--;
+                  if (this.computeTime <= 0) {
+                    clearInterval(this.timer)
+                  }
+                }, 1000);
+              }
+            })
+          }
+        })
+      }
     },
   },
 };
@@ -169,6 +269,18 @@ export default {
   margin: 0px auto 30px auto;
   text-align: center;
   color: #707070;
+}
+
+.sms-login {
+  width: 25%;
+  height: 30px;
+  float: right;
+}
+
+.login-code {
+  width: 33%;
+  height: 38px;
+  float: right;
 }
 
 .login-form {
