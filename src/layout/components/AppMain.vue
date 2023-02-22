@@ -2,19 +2,25 @@
   <section class="app-main">
     <transition name="fade-transform" mode="out-in">
       <keep-alive :include="cachedViews">
-        <router-view v-if="!$route.meta.link" :key="key" />
+        <router-view v-if="!$route.meta.link" :key="key"/>
       </keep-alive>
     </transition>
-    <iframe-toggle />
+    <iframe-toggle/>
   </section>
 </template>
 
 <script>
 import iframeToggle from "./IframeToggle/index"
+import watermark from "watermark-dom";
 
 export default {
   name: 'AppMain',
-  components: { iframeToggle },
+  components: {iframeToggle},
+  mounted() {
+    // 加载水印
+    const username = this.$store.state.user.name;
+    watermark.load({watermark_txt: username + "北省"});
+  },
   computed: {
     cachedViews() {
       return this.$store.state.tagsView.cachedViews
