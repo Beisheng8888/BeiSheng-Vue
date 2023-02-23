@@ -152,7 +152,7 @@ export default {
       loading: false,
       // 注册开关
       register: false,
-      isSmsLogin: false,
+      isSmsLogin: true,
       redirect: undefined
     };
   },
