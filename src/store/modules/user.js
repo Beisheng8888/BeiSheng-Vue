@@ -46,6 +46,22 @@ const user = {
       })
     },
 
+    // 第三方平台登录
+    SocialLogin({ commit }, userInfo) {
+      const code = userInfo.code
+      const state = userInfo.state
+      const source = userInfo.source
+      return new Promise((resolve, reject) => {
+        socialLogin(source, code, state).then(res => {
+          setToken(res.token)
+          commit('SET_TOKEN', res.token)
+          resolve()
+        }).catch(error => {
+          reject(error)
+        })
+      })
+    },
+
     // 短信登录
     SmsLogin({ commit }, userInfo) {
       const mobile = userInfo.mobile.trim()

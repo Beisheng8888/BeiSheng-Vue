@@ -47,7 +47,6 @@
         :imgSize="{ width: '330px', height: '155px' }"
         ref="verify"
       ></Verify>
-      <!--      <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">记住密码</el-checkbox>-->
 
       <el-form-item prop="mobile" v-if="isSmsLogin">
         <el-input v-model="loginForm.mobile" type="text" auto-complete="off" placeholder="手机号">
@@ -104,6 +103,29 @@
           <router-link class="link-type" :to="'/register'">立即注册</router-link>
         </div>
       </el-form-item>
+
+      <!--  第三方应用登录 -->
+      <el-form-item style="width:100%;">
+        <div class="oauth-login" style="display:flex">
+          <div class="oauth-login-item" @click="doSocialLogin('gitee')">
+            <svg-icon icon-class="gitee" style="height:1.2em" />
+            <span>Gitee</span>
+          </div>
+          <div class="oauth-login-item" @click="doSocialLogin('github')">
+            <svg-icon icon-class="github" style="height:1.2em" />
+            <span>Github</span>
+          </div>
+          <div class="oauth-login-item" @click="doSocialLogin('weixin')">
+            <svg-icon icon-class="weixin" style="height:1.2em" />
+            <span>Weixin</span>
+          </div>
+          <div class="oauth-login-item" @click="doSocialLogin('qq')">
+            <svg-icon icon-class="qq" style="height:1.2em" />
+            <span>QQ</span>
+          </div>
+        </div>
+      </el-form-item>
+
     </el-form>
     <!--  底部  -->
     <div class="el-login-footer">
@@ -113,6 +135,7 @@
 </template>
 
 <script>
+import { authBinding } from "@/api/system/auth";
 import logoImg from '@/assets/logo/logo.png'
 import Cookies from "js-cookie";
 import {encrypt, decrypt} from "@/utils/jsencrypt";
@@ -180,6 +203,12 @@ export default {
         password: password === undefined ? this.loginForm.password : decrypt(password),
         rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
       };
+    },
+    doSocialLogin(source) {
+      authBinding(source).then(res => {
+        console.log(res.msg)
+        top.location.href = res.msg;
+      });
     },
     capctchaCheckSuccess(params) {
       if (this.isSmsLogin) {
@@ -288,15 +317,12 @@ export default {
   background: #ffffff;
   width: 400px;
   padding: 25px 25px 5px 25px;
-
   .el-input {
     height: 38px;
-
     input {
       height: 38px;
     }
   }
-
   .input-icon {
     height: 39px;
     width: 14px;
@@ -321,6 +347,25 @@ export default {
   font-family: Arial;
   font-size: 12px;
   letter-spacing: 1px;
+}
+
+.oauth-login {
+  display: flex;
+  align-items: cen;
+  cursor:pointer;
+}
+.oauth-login-item {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+}
+.oauth-login-item img {
+  height: 25px;
+  width: 25px;
+}
+.oauth-login-item span:hover {
+  text-decoration: underline red;
+  color: red;
 }
 
 #particles-js {
