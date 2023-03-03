@@ -43,7 +43,7 @@
       <Verify
         @success="capctchaCheckSuccess"
         :mode="'pop'"
-        :captchaType="'clickWord'"
+        :captchaType="'blockPuzzle'"
         :imgSize="{ width: '330px', height: '155px' }"
         ref="verify"
       ></Verify>

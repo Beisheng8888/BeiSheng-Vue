@@ -7,6 +7,8 @@
 
 <script>
 import ThemePicker from "@/components/ThemePicker";
+import {snow} from "@/api/snow.js";  //设置花瓣
+import {circle} from "@/api/circle.js"; //鼠标设置特效
 
 export default {
   name: "App",
